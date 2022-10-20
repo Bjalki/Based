@@ -1,0 +1,120 @@
+/**
+ * JavaCC template file created by SF JavaCC plugin 1.5.28+ wizard for JavaCC 1.5.0+
+ */options{  static = true;}PARSER_BEGIN(CustomLang)
+import java.util.Scanner;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+
+public class CustomLang
+{
+  public static Scanner in;
+  
+  public static void main(String args[]) throws ParseException
+  {
+    try {
+      CustomLang parser = null;
+      in = new Scanner(System.in);
+      if (args.length > 0)
+      parser = new CustomLang(new FileInputStream(args[0]));
+      else
+      {
+        System.out.print("Program filename: ");
+        parser = new CustomLang(new FileInputStream(in.next()));
+       }
+      Program p = parser.program();
+      p.eval(new Env());
+      //p.print();
+    }
+    catch (FileNotFoundException e)
+    {
+      System.out.println(e.getMessage());
+    }
+    catch (RuntimeException e)
+    {
+      System.out.println(e.getMessage());
+    }
+  }
+}PARSER_END(CustomLang)SKIP :{  " "| "\r"| "\t"| "\n"}TOKEN : /* OPERATORS */{  < PLUS : "+" >| < MINUS : "-" >| < MULTIPLY : "*" >| < DIVIDE : "/" >
+| < ASSIGN : ":=" >}TOKEN: /* NUMBERS */
+{
+  < INTEGER : ("+" | "-")? (< DIGIT >)+>
+| < #DIGIT : [ "0"-"9" ] >
+}
+
+TOKEN: /* KEYWORDS */
+{
+  < READ : "read" >
+| < WRITE : "write" >
+| < NEWLINE : "newline" >
+}
+
+TOKEN:
+{
+  < IDENTIFIER : < INITIAL > (< SUBSEQUENT >)* >
+| < INITIAL : ["a"-"z", "!", "$", "%", "&", "*", "/", ":", "<", "=", ">", "?", "^", "_", "~"] >
+| < SUBSEQUENT: (< INITIAL > | < DIGIT > | ["+", "-", ".", "@"]) >
+}
+
+Program program() :
+{ Program p = new Program(); Reg r = null;}
+{
+  (r=reg() { p.regList.add(r); })*
+  { return p; }
+}
+
+Reg reg() :
+{ Reg r = new Reg(); Exp e = null; Token t = null; }
+{
+  (< IDENTIFIER > { r.label = token.image; } < ASSIGN >)?
+  e=exp() { r.exp = e; }
+  { return r; }
+}
+
+Exp exp() :
+{ Exp e = null; }
+{
+  (
+    e=literal()
+  | e=access()
+  | e=derivedExp()
+  | e=block()
+  )
+  { return e; }
+}
+
+Literal literal() :
+{ Literal l = null; String s = null; }
+{
+  < INTEGER > { s = token.image; l = new Int(s); }
+  { return l; }
+}
+
+Exp derivedExp() :
+{ Exp exp1 = null; Exp exp2 = null; Token t = null; }
+{
+  "("
+  (
+    (< READ > { exp1 = new ReadExp(in); })
+  | (< WRITE > exp1=exp() { exp1 = new WriteExp(exp1); })
+  | (< NEWLINE > { exp1 = new NewlineExp(); })
+  | ((< PLUS > | < MINUS > | < MULTIPLY > | < DIVIDE >) { t = token; } exp1=exp() exp2=exp() { exp1 = new ArithExp(t.image, exp1, exp2); })
+  )
+  ")"
+  { return exp1; }
+}
+
+Block block() :
+{ Block b = new Block(); Reg r = null; }
+{
+  "{"
+  (r=reg() { b.regList.add(r); }) ("," r=reg() { b.regList.add(r); })*
+  "}"
+  { return b; }
+}
+
+Access access() :
+{ Access a = null; Exp e = null; Access next = null; }
+{
+  ("[" ((< IDENTIFIER > { a = new IdAccess(token.image); })  | (e=exp() { a = new ExpAccess(e); })) "]") (next=access() { a.next = next; })?
+  { return a; }
+}
