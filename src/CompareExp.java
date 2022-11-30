@@ -1,10 +1,10 @@
 
-public class ArithExp extends Exp {
+public class CompareExp extends Exp {
 	
 	String operator;
 	Exp operand1, operand2;
 
-	public ArithExp(String operator, Exp operand1, Exp operand2) {
+	public CompareExp(String operator, Exp operand1, Exp operand2) {
 		this.operator = operator;
 		this.operand1 = operand1;
 		this.operand2 = operand2;
@@ -26,25 +26,21 @@ public class ArithExp extends Exp {
 		int a = (Integer) ve1.val;
 		int b = (Integer) ve2.val;
 		
-		int result = 0;
-		if(operator.equals("+")) {
-			result = a + b;
+		boolean result = false;
+		if(operator.equals("<")) {
+			result = a < b;
 		}
-		else if(operator.equals("-")) {
-			result = a - b;
+		else if(operator.equals("<=")) {
+			result = a <= b;
 		}
-		else if(operator.equals("*")) {
-			result = a * b;
+		else if(operator.equals(">")) {
+			result = a > b;
 		}
-		else if(operator.equals("/")) {
-			if(b == 0) {
-				System.err.println("/: undefined for 0");
-				System.exit(2);
-			}
-			result = a / b;
+		else if(operator.equals(">=")) {
+			result = a >= b;
 		}
 		else {
-			throw new RuntimeException("Invalid arithmetic operator: " + operator);
+			throw new RuntimeException("Invalid comparative operator: " + operator);
 		}
 		
 		return new ValEnv(result, ve2.env);

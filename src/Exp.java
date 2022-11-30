@@ -1,4 +1,4 @@
 
-public abstract class Exp extends ASTNode {
+public abstract class Exp extends Line {
 
 }

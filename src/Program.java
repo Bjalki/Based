@@ -2,21 +2,21 @@ import java.util.ArrayList;
 
 public class Program extends ASTNode {
 	
-	ArrayList<Reg> regList = new ArrayList<>();
+	ArrayList<Line> lineList = new ArrayList<>();
 
 	@Override
 	ValEnv eval(Env env) {
 		ValEnv ve = new ValEnv(null, env);
-		for (Reg r: regList) {
-			ve = r.eval(ve.env);
+		for (Line l: lineList) {
+			ve = l.eval(ve.env);
 		}
 		return ve;
 	}
 
 	@Override
 	void print() {
-		for (Reg r: regList) {
-			r.print();
+		for (Line l: lineList) {
+			l.print();
 			System.out.println();
 		}
 	}

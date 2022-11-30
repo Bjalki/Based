@@ -1,5 +1,3 @@
-import java.util.ArrayList;
-
 public class ExpAccess extends Access {
 	
 	Exp exp;
@@ -15,38 +13,50 @@ public class ExpAccess extends Access {
 		if(value instanceof Integer) {
 			int index = (Integer)value;
 			try {
-				value = env.lookup(index);
+				value = ve.env.lookup(index);
 			}
 			catch(RuntimeException e) {
-				System.err.println(e.getMessage());
+				System.err.print(e.getMessage());
 				System.exit(4);
 			}
 		}
 		else if(value instanceof String) {
 			String id = (String) value;
 			try {
-				value = env.lookup(id);
+				value = ve.env.lookup(id);
 			}
-			catch(RuntimeException runE) {
-				System.err.println(runE.getMessage());
+			catch(RuntimeException e) {
+				System.err.print(e.getMessage());
+				System.exit(4);
+			}
+		}
+		else if(value instanceof Loc) {
+			Loc loc = (Loc) value;
+			try {
+				value = ve.env.lookup(loc.layer, loc.index);
+			}
+			catch(RuntimeException e) {
+				System.err.print(e.getMessage());
 				System.exit(4);
 			}
 		}
 		else {
-			System.err.println("access: incorrect type " + value.getClass().getName());
+			System.err.print("access: incorrect type " + value.getClass().getName());
 			System.exit(4);
 		}
 		if(next == null) {
 			ve = new ValEnv(value, ve.env);
 		}
-		else if(!(value instanceof ArrayList)) {
-			System.err.println("access: dimension out of bounds");
+		else if(!(value instanceof Env)) {
+			System.err.print("access: dimension out of bounds");
 			System.exit(5);
 		}
 		else {
-			ArrayList<Object> list = (ArrayList<Object>) value;
-			Env accessEnv = new Env(env, list);
-			ve = new ValEnv(next.eval(accessEnv).val, env);
+			Env currEnv = ve.env;
+			Env accessEnv = (Env) value;
+			accessEnv.nextEnv = currEnv;
+			accessEnv.layer = currEnv.layer + 1;
+			ve = new ValEnv(next.eval(accessEnv).val, currEnv);
 		}
 		return ve;
 	}

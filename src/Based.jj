@@ -1,0 +1,219 @@
+/**
+ * JavaCC template file created by SF JavaCC plugin 1.5.28+ wizard for JavaCC 1.5.0+
+ */options{  static = true;}PARSER_BEGIN(Based)
+import java.util.Scanner;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+
+public class Based
+{
+  public static Scanner in;
+  
+  public static void main(String args[]) throws ParseException
+  {
+    try {
+      Based parser = null;
+      in = new Scanner(System.in);
+      if (args.length > 0)
+      parser = new Based(new FileInputStream(args[0]));
+      else
+      {
+        System.out.print("Program filename: ");
+        parser = new Based(new FileInputStream(in.next()));
+       }
+      Program p = parser.program();
+      p.eval(new Env());
+      //p.print();
+    }
+    catch (FileNotFoundException e)
+    {
+      System.out.println(e.getMessage());
+    }
+    catch (RuntimeException e)
+    {
+      System.out.println(e.getMessage());
+    }
+  }
+}PARSER_END(Based)SKIP :{  " "| "\r"| "\t"| "\n"}TOKEN : /* OPERATORS */{  < PLUS : "+" >| < MINUS : "-" >| < MULTIPLY : "*" >| < DIVIDE : "/" >
+| < DEFINE : "::" >
+| < IGNORE : "!!" >
+| < LAMBDA : "=>" >
+| < ASSIGN : "->" >
+| < EQUAL : "==" >
+| < LESS : "<" >
+| < GREATER : ">" >
+| < LEQ : "<=" >
+| < GEQ : " >=" >
+| < AND : "&&" >
+| < OR : "||" >
+| < NOT : "~" >}TOKEN: /* NUMBERS */
+{
+  < INTEGER : ("+" | "-")? (< DIGIT >)+>
+| < #DIGIT : [ "0"-"9" ] >
+}
+
+TOKEN: /* BOOLS */
+{
+  < TRUE : "#t" >
+| < FALSE : "#f" >
+}
+
+TOKEN: /* KEYWORDS */
+{
+  < READ : "read" >
+| < WRITE : "write" >
+| < NEWLINE : "newline" >
+| < CONTAINS : "contains" >
+| < ADD : "add" >
+| < SWAP : "swap" >
+| < SET : "set" >
+}
+
+TOKEN:
+{
+  < IDENTIFIER : < INITIAL > (< SUBSEQUENT >)* >
+| < INITIAL : ["a"-"z", "$", "%", "&", "*", "/", "<", "=", ">", "^", "_"] >
+| < SUBSEQUENT: (< INITIAL > | < DIGIT > | ["+", "-", ".", "@"]) >
+}
+
+Program program() :
+{ Program p = new Program(); Line l = null;}
+{
+  ((l=reg() { p.lineList.add(l); })|(l=exp() { p.lineList.add(l); }))*
+  { return p; }
+}
+
+Reg reg() :
+{ Reg r = new Reg(); Exp e = null; Label l = null; }
+{
+  < DEFINE > (LOOKAHEAD(label()) l=label() { r.label = l; })? ","
+  e=exp() { r.exp = e; }
+  { return r; }
+}
+
+Exp exp() :
+{ Exp e = null; }
+{
+  (
+    LOOKAHEAD(lambda()) e=lambda()
+  | LOOKAHEAD(derivedExp()) e=derivedExp()
+  | LOOKAHEAD(call()) e=call()
+  | LOOKAHEAD(assign()) e=assign()
+  | e=singular()
+  ) 
+  { return e; }
+}
+
+AssignExp assign() :
+{ AssignExp a = new AssignExp(); Exp e = null; }
+{
+	"(" e=exp() { a.data = e; } < ASSIGN > e=exp() { a.location = e; } ")"
+	{ return a; }
+}
+
+Cond ternary() :
+{ Cond c = null; Exp e1 = null; Exp e2 = null; Exp e3 = null; }
+{
+  "(" e1=exp() "?" e2=exp() (":" e3=exp())? ")"
+  { c = new Cond(e1, e2, e3); return c; }
+}
+
+Exp singular() :
+{ Exp e = null; }
+{
+  (    e=label()
+  | e=literal()
+  | e=access()
+  | e=ternary()
+  | e=block()
+  | e=loop()
+  )
+  { return e; }
+}
+
+LoopExp loop() :
+{ LoopExp le = new LoopExp(); Exp e = null; LambdaExp func = null; }
+{
+  "|" e=exp() { le.exp1 = e; } ("," e=exp() { le.exp2 = e; })? ":" func=lambda() { le.func = func; } "|"
+  { return le; }
+}
+
+Label label() :
+{ Label l = null; String id = null; }
+{
+  < IDENTIFIER > { id = token.image; l = new Label(id); }
+  { return l; }
+}
+
+Literal literal() :
+{ Literal l = null; String s = null; }
+{
+  (    < INTEGER > { s = token.image; l = new Int(s); }
+  | (< TRUE > | < FALSE >) { s = token.image; l = new Bool(s); }
+  )
+  { return l; }
+}
+
+Exp derivedExp() :
+{ Exp exp1 = null; Exp exp2 = null; Exp exp3 = null; Token t = null; }
+{
+  (
+    (< READ > "()" { exp1 = new ReadExp(in); })
+  | (< WRITE > "(" exp1=exp() ")" { exp1 = new WriteExp(exp1); })
+  | (< NEWLINE > "()" { exp1 = new NewlineExp(); })
+  | (< ADD > "(" exp1=exp() "," exp2=exp() ")" { exp1 = new AddExp(exp1, exp2); } )
+  | (< CONTAINS > "(" exp1=exp() "," exp2=exp() ")" { exp1 = new ContainsExp(exp1, exp2); } )
+  | (< SWAP > "(" exp1=exp() "," exp2=exp() "," exp3=exp() ")" { exp1 = new SwapExp(exp1, exp2, exp3); } )
+  | (< SET > "(" exp1=exp() "," exp2=exp() "," exp3=exp() ")" { exp1 = new SetExp(exp1, exp2, exp3); } )
+  | (< NOT > "(" exp1=exp() ")" { exp1 = new NotExp(exp1); })
+  | "(" exp1=exp()
+  		(
+  		  ((< PLUS > | < MINUS > | < MULTIPLY > | < DIVIDE >) { t = token; } exp2=exp() { exp1 = new ArithExp(t.image, exp1, exp2); })
+      	| ((< GREATER > | < LESS > | < GEQ > | < LEQ >) { t = token; } exp2=exp() { exp1 = new CompareExp(t.image, exp1, exp2); })
+      	| (< EQUAL > exp2=exp() { exp1 = new EqualExp(exp1, exp2); })
+      	| ((< AND > | < OR >) { t = token; } exp2=exp() { exp1 = new BoolOpExp(t.image, exp1, exp2); })
+    	)
+    ")"
+  )
+  { return exp1; }
+}
+
+Call call() :
+{ Call c = new Call(); Exp e = null; }
+{
+  e=singular() { c.head = e; } (("(" (e=exp() { c.params.add(e); })? ("," e=exp() { c.params.add(e); })* ")") | "()")
+  { return c; }
+}
+
+Block block() :
+{ Block b = new Block(""); Line l = null; }
+{
+  "{"
+  ((l=reg() | l=exp()) { b.lineList.add(l); })*
+  "}"
+  { return b; }
+}
+
+Reg innerReg() :
+{ Reg r = new Reg(); Exp e = null; Label l = null; }
+{
+  l=label() < DEFINE > { r.label = l; }
+  e=exp() { r.exp = e; }
+  { return r; }
+}
+
+Access access() :
+{ Access a = null; Exp e1 = null; Exp e2 = null; Access next = null; }
+{
+  ("[" ((e1=exp()) ("," e2=exp())?) "]" { if (e2 == null) a = new ExpAccess(e1); else a = new LocAccess(e1, e2); }) (LOOKAHEAD(access()) next=access() { a.next = next; })?
+  { return a; }
+}
+
+LambdaExp lambda() :
+{ LambdaExp lam = new LambdaExp(); Exp e = null; Label lab = null; }
+{
+  (    "(" (lab=label() { lam.labels.add(lab); })? ("," lab=label() { lam.labels.add(lab); })* ")" < LAMBDA > e=exp() { lam.exp = e; }
+  | "()" < LAMBDA > e=exp() { lam.exp = e; }
+  )
+  { return lam; }
+}
