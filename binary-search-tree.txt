@@ -1,0 +1,53 @@
+:: init_node, (k) => {:: key, [k]
+					  :: left, [0]
+					  :: right, [0]
+					  :: p, [0]}
+
+:: tree_minimum, (node) => {|~(([node][left] == [0])) : () => ([node][left] -> node)|
+							:: return, [node]}
+
+:: init_tree, () => {:: root, [0]}
+
+:: insert, (tree, z) => {:: y, [0]
+						 :: x, [tree][root]
+						 |~(([x] == [0])) : () => {([x] -> y)
+						 						 (([z][key] < [x][key]) ? ([x][left] -> x) : ([x][right] -> x))}|
+						 set([z], p, [y])
+						 (([y] == [0]) ? set([tree], root, [z]) : (([z][key] < [y][key]) ? set([y], left, [z]) : set([y], right, [z])))}
+
+:: transplant, (tree, u, v) => {(([u][p] == [0]) ? set([tree], root, [v]) : (([u] == [u][p][left]) ? set([u][p], left, [v]) : set([u][p], right, [v])))
+								(~(([v] == [0])) ? set([v], p, [u][p]))}
+
+:: delete, (tree, z) => {(([z][left] == [0]) ? [transplant]([tree], [z], [z][right]) :
+                         (([z][right] == [0]) ? [transplant]([tree], [z], [z][left]) :
+                          {:: check, [tree_minimum]([z][right])
+                           :: y, [check][return]
+                           (~(([y][p] == [z])) ? {[transplant]([tree], [y], [y][right])
+                           						  set([y], right, [z][right])
+                           						  set([y][right], p, [y])})
+                           [transplant]([tree], [z], [y])
+                           set([y], left, [z][left])
+                           set([y][left], p, [y])}))}
+
+:: tree_contains, (tree, k) => {:: x, [tree][root]
+						   		|(~(([x] == [0])) && ~(([k] == [x][key]))) : () => (([k] < [x][key]) ? ([x][left] -> x) : ([x][right] -> x))|
+						   		:: return, [x]}
+
+:: my_tree, [init_tree]()
+:: command, read()
+| ~(([command] == -1)) : () => {:: val, read()
+						  		(([command] == 0) ? {:: check, [tree_contains]([my_tree], [val])
+						  							 :: node, [check][return]
+						  					   		 (~(([node] == [0])) ? {write(1)
+						  					   						  		newline()
+						  					   						  		[delete]([my_tree], [node])}
+						  					   					   		 : {write(0) newline()})}
+						  						  : (([command] == 1) ? {:: node, [init_node]([val])
+						  										   		 [insert]([my_tree], [node])}
+						  											  : (([command] == 2) ? {:: check, [tree_contains]([my_tree], [val])
+						  							 										 :: node, [check][return]
+						  					   										   		 (~(([node] == [0])) ? {write(1) newline()} : {write(0) newline()})})))
+						  		(read() -> command)}|
+
+						  
+						  

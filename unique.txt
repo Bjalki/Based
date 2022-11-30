@@ -1,0 +1,5 @@
+:: n, read()
+:: vals, |[n] : () => read()|
+:: set, {}
+|[vals] : (val) => (~(contains([set], [val])) ? add([set], [val]) : [0])|
+|[set] : (val) => {write([val]) newline()}|

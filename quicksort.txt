@@ -1,0 +1,18 @@
+:: partition, (arr, p, r) => { :: x, [arr][[r]]
+                               :: i, ([p] - 1)
+                                     |[p], ([r] - 1) : (j) => (([arr][[j]] <= [x]) ?
+                                                                { (([i] + 1) -> i)
+                                                                  swap([arr], [i], [j])})|
+                                     swap([arr], ([i] + 1), [r])
+                                  :: result, ([i] + 1)}
+
+:: quicksort, (arr, p, r) => (([p] < [r]) ?
+                                 { :: q, [partition]([arr], [p], [r])
+                                         [quicksort]([arr], [p], ([q][result] - 1))
+                                         [quicksort]([arr], ([q][result] + 1), [r])}
+                                 : [0])
+
+:: n, read()
+:: vals, |[n] : () => read()|
+[quicksort]([vals], 1, [n])
+|[vals] : (val) => {write([val]) newline()}|
