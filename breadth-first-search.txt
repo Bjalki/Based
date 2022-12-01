@@ -1,0 +1,47 @@
+:: init_node, (v) => {:: val, [v] 
+                      :: color, 0
+                      :: d, 99999999
+                      :: pi, [0]}
+
+:: init_graph, () => {:: V, {}
+                      :: Adj, {}}
+
+:: bfs, (G, s) => {set([s], color, 1)
+                   set([s], d, 0)
+                   set([s], pi, [0])
+                   :: Q, {}
+                   add([Q], [s])
+                   | ~((size([Q]) == 0)) : () => {:: u, remove([Q], 1)
+                						      | [G][Adj][[u][val]] : (v) => (([v][color] == 0) ? {set([v], color, 1)
+                                                                                 			      set([v], d, ([u][d] + 1))  
+                                                                                 			      set([v], pi, [u])
+                                                                                                  add([Q], [v])})|
+                                              set([u], color, 2)}|}
+
+::n, read()
+::G, [init_graph]()
+| [n] : (i) => {add([G][V], [init_node]([i]))
+                add([G][Adj], {})}|
+
+::in1, (read() + 1)
+| ~(([in1] == 0)) : () => {::in2, (read() + 1)
+                       	   add([G][Adj][[in1]], [G][V][[in2]])
+                           add([G][Adj][[in2]], [G][V][[in1]])
+                           ((read() + 1) -> in1)}|
+
+::u, (read() + 1)
+::v, (read() + 1)
+
+([G][V][[u]] -> u)
+([G][V][[v]] -> v)
+
+[bfs]([G], [u])
+
+(([v][pi] == [0]) ? write(-1) : {::ptr, [v]
+								 ::stack, {}
+								 | ~(([ptr] == [0])) : () => {add([stack], [ptr])
+                                                 			  ([ptr][pi] -> ptr)}|
+                                 | size([stack]), 1 : (i) => {write(([stack][[i]][val] - 1)) newline()}|})
+                             
+
+                            
