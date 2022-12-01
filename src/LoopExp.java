@@ -60,8 +60,15 @@ public class LoopExp extends Exp {
 				start = 1;
 				end = num1;
 			}
-			for(int i = start; i <= end; i++) {
-				vals.add(new Int(i));
+			if(start <= end) {
+				for(int i = start; i <= end; i++) {
+					vals.add(new Int(i));
+				}
+			}
+			else {
+				for(int i = start; i >= end; i--) {
+					vals.add(new Int(i));
+				}
 			}
 			int nParams = funcClosure.params.values.size() - 1;
 			int loops = (nParams > 0) ? vals.size() / nParams : vals.size();
@@ -94,7 +101,7 @@ public class LoopExp extends Exp {
 			}
 		}
 		else {
-			System.err.println("loop: exp1 not of a correct type");
+			System.err.println("loop: exp1 not of a correct type (given " + value.getClass() + ")");
 			System.exit(15);
 		}
 		return new ValEnv(results, ve.env);
