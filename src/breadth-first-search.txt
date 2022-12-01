@@ -1,0 +1,48 @@
+: init_node, (v) => {:: val, [v] 
+                     :: color, 0
+                     :: d, 99999999
+                     :: pi, [0]}
+
+:: init_graph, () => {:: V, [0]
+                      :: Adj, [0]}
+
+:: bfs, (s) => {
+                set([s], color, 1)
+                set([s], d, 0)
+                set([s], pi, [0])
+                :: Q, [0]
+                add([Q], [s])
+                | ~([Q] == [0]) : () => 
+                                 ::u, remove([Q], 0)                                
+    //look at                    | for each[u][val] : (v) => ([v][color] == 0) ? set([v], color, 1)
+                                                                                 set([v], d, [u][d] + 1)  
+                                                                                 set([v], pi, u)
+                                                                                 add([Q], [v])
+                                                                                 |
+                                set([u], color, 2)|
+}
+
+::n, read()
+::G, [init_graph]
+| [n] : (i) => add([G][V], init_node(i))
+               add([G][Adj], [0]) |
+
+::in1, read()
+| ~([in1]== -1) () => ::in2, read()
+                      add([G][Adj], [G][V][in2])
+                      add([G][Adj], [G][V][in1])
+                      set([n1], read())
+
+::u, read()
+::v, read()
+set([u], [G][V][u])
+set([v], [G][V][v])
+
+[bfs](v)
+
+([v][pi] == [0]) ? write(-1) : 
+                             ::ptr, V
+                             ::stack, {}
+                             | ~([ptr] == [0]) () => add([stack], ptr)
+                                                 set([ptr], [ptr][pi])|
+                            | for each node in stack (node) => print[node][val] |
